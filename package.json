@@ -1,5 +1,5 @@
 {
-  "version": "9.1.0",
+  "version": "9.1.2",
   "name": "com.revmob.cordova.plugin",
   "cordova_name": "RevMob Cordova Plugin",
   "description": "Official RevMob Cordova SDK plugin.",
@@ -8,10 +8,10 @@
     "ios"
   ],
   "engines": [
-  {
-    "name": "cordova",
-    "version": ">=3.0.0"
-  }
+    {
+      "name": "cordova",
+      "version": ">=3.0.0"
+    }
   ],
   "keywords": [
     "ecosystem:cordova",
