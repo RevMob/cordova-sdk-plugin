@@ -266,6 +266,9 @@ typedef enum {
  */
 - (void)hideBanner;
 
+-(void) updateBannerForViewController:(UIViewController *) vc;
+-(void) updateBanner;
+
 /**
  Show popup.
 

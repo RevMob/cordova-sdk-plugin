@@ -81,7 +81,8 @@ typedef void (^RevMobBannerOnClickHandler)(RevMobBanner *banner);
  */
 - (void)hideAd;
 
-
+-(void) updateForViewController:(UIViewController *) vc;
+-(void) update;
 
 @end
 
