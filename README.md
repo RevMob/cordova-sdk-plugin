@@ -20,6 +20,10 @@ or install with npm
 npm install https://github.com/RevMob/cordova-sdk-plugin
 cordova plugin add https://github.com/RevMob/cordova-sdk-plugin
 ```
+or install with Phonegap Build
+```
+<plugin name="com.revmob.cordova.plugin" spec="9.1.6" source="pgb" />
+```
 or install with plugman
 ```
 plugman install --platform <YOUR PLATFORM> --project platforms/<YOUR PLATORM> --plugin https://github.com/RevMob/cordova-sdk-plugin

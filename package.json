@@ -1,5 +1,5 @@
 {
-  "version": "9.1.4",
+  "version": "9.1.6",
   "name": "com.revmob.cordova.plugin",
   "cordova_name": "RevMob Cordova Plugin",
   "description": "Official RevMob ads Cordova SDK plugin.",
