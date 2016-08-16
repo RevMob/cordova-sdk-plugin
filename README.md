@@ -22,7 +22,7 @@ cordova plugin add https://github.com/RevMob/cordova-sdk-plugin
 ```
 or install with Phonegap Build
 ```
-<plugin name="com.revmob.cordova.plugin" spec="9.1.6" source="pgb" />
+<plugin name="com.revmob.cordova.plugin" spec="9.2.0" source="pgb" />
 ```
 or install with plugman
 ```

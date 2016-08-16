@@ -9,11 +9,13 @@ typedef void (^RevMobBannerViewOnclickHandler)(RevMobBannerView *banner);
 
 /**
  Class responsable for handle the BannerView ad unit.
- 
+
  You must integrate it in you app layout as a regualar UIView, if you don't want to handle
  the layout integration you should use RevMobBanner class.
  */
 @interface RevMobBannerView : UIView <UIWebViewDelegate>
+
+@property (nonatomic,assign) NSString * loadMethod;
 
 /**
  The delegate setted on this property is called when ad related events happend, see
@@ -23,16 +25,16 @@ typedef void (^RevMobBannerViewOnclickHandler)(RevMobBannerView *banner);
 
 /**
  Use this method to load the ad.
- 
+
  @see loadWithSuccessHandler:andLoadFailHandler:onClickHandler:
  */
 - (void)loadAd;
 
 /**
  Use this method to load the ad.
- 
+
  Example of usage:
- 
+
      [banner loadWithSuccessHandler:^(RevMobBannerView *banner) {
        [banner setFrame:CGRectMake(10, 20, 200, 40)];
        [self.view addSubview:banner];
@@ -56,7 +58,7 @@ typedef void (^RevMobBannerViewOnclickHandler)(RevMobBannerView *banner);
 /*
     Use these methods to show the banner. You can specify a position or even another view where it will be added.
 */
- 
+
 - (void)showAd;
 - (void)showAd:(CGFloat)x y:(CGFloat)y width:(CGFloat)w height:(CGFloat)h view:(UIView*)v;
 
@@ -69,4 +71,3 @@ typedef void (^RevMobBannerViewOnclickHandler)(RevMobBannerView *banner);
 
 
 @end
-

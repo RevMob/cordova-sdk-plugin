@@ -21,7 +21,6 @@ import android.content.Context;
 
 import com.revmob.RevMob;
 import com.revmob.RevMobAdsListener;
-import com.revmob.RevMobTestingMode;
 import com.revmob.ads.interstitial.RevMobFullscreen;
 import com.revmob.client.RevMobClient;
 import com.revmob.ads.link.RevMobLink;
@@ -35,11 +34,15 @@ public class RevMobPlugin extends CordovaPlugin {
 	private static RelativeLayout customBannerLayout;
 
 	private static RevMobBanner customBannerAd;
+	private static RelativeLayout.LayoutParams customBannerParams;
 	private static RevMobBanner bannerAd;
 	private static RelativeLayout.LayoutParams bannerParams;
 	private static Activity customBannerActivity;
 	private static Activity bannerActivity;
-
+	private boolean isLoadingBanner = false;
+	private boolean isLoadedBanner  = false;
+	private boolean isLoadedCustomBanner = false;
+	private boolean  isLoadingCustomBanner= false;
 	private RevMobFullscreen video, fullscreen, rewardedVideo;
 	private CallbackContext lastCallbackContext = null;
 
@@ -53,6 +56,30 @@ public class RevMobPlugin extends CordovaPlugin {
 		}
 		if (revmob == null) {
 			return error(callbackContext, "Session has not been started. Call the startSession method.");
+		}
+		if (action.equals("releaseBanner")) {
+ 			setCallbackContext(callbackContext);
+ 			releaseBanner();
+ 			return true;
+ 		}
+		if (action.equals("releaseCustomBanner")) {
+			setCallbackContext(callbackContext);
+			releaseCustomBanner();
+			return true;
+		}
+ 		if (action.equals("preLoadBanner")) {
+ 			setCallbackContext(callbackContext);
+ 			preLoadBanner();
+ 			return true;
+ 		}
+		if (action.equals("preLoadCustomBanner")) {
+			setCallbackContext(callbackContext);
+			cordova.getActivity().runOnUiThread(new Runnable() {
+				public void run() {
+					preLoadCustomBanner(args);
+				}
+			});
+			return true;
 		}
 		if (action.equals("showFullscreen")) {
 			setCallbackContext(callbackContext);
@@ -276,82 +303,109 @@ public class RevMobPlugin extends CordovaPlugin {
 			rewardedVideo.showRewardedVideo();
 	}
 
-	private void showBanner() {
-		if (bannerAd != null) {
-			hideBanner(bannerActivity);
-		}
+	private void preLoadBanner() {
+			if(bannerAd == null){
+				cordova.getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							DisplayMetrics metrics = new DisplayMetrics();
+							float displayWidth = cordova.getActivity().getWindowManager().getDefaultDisplay().getWidth();
+							float displayHeight = cordova.getActivity().getWindowManager().getDefaultDisplay().getHeight();
+							((Activity) cordova.getActivity()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+							int width;
+							if(displayWidth < displayHeight){
+								width = (int) (displayWidth / metrics.density);
+							} else {
+								width = (int) (displayHeight / metrics.density);
+							}
+							RevMobBanner.DEFAULT_WIDTH_IN_DIP = width;
 
+							int idealHeight = dipToPixels(cordova.getActivity(), RevMobBanner.DEFAULT_HEIGHT_IN_DIP);
+
+							width = dipToPixels(cordova.getActivity(), width);
+
+							bannerLayout = new RelativeLayout(cordova.getActivity());
+							bannerParams = new RelativeLayout.LayoutParams(width, idealHeight);
+							bannerParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+							bannerLayout.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+
+							cordova.getActivity().addContentView(bannerLayout, new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT));
+
+
+							if(!isLoadingBanner){
+								isLoadingBanner=true;
+								bannerAd = revmob.createBanner(cordova.getActivity(), new RevMobAdsListener() {
+									public void onRevMobAdReceived() {
+										eventCallbackSuccess("BANNER_RECEIVED");
+										isLoadingBanner=false;
+										isLoadedBanner = true;
+									}
+									public void onRevMobAdNotReceived(String message) {
+										eventCallbackError("BANNER_NOT_RECEIVED - With error: "+message);
+										isLoadingBanner=false;
+									}
+									public void onRevMobAdClicked() {
+										eventCallbackSuccess("BANNER_CLICKED");
+									}
+									public void onRevMobAdDisplayed() {
+										eventCallbackSuccess("BANNER_DISPLAYED");
+									}
+								});
+
+								bannerLayout.addView(bannerAd, bannerParams);
+
+								bannerAd.setAutoShow(false);
+
+							}
+						} catch (Exception e) {
+						}
+					}
+				});
+
+			}
+
+	 	}
+
+	private void showBanner() {
 		cordova.getActivity().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					DisplayMetrics metrics = new DisplayMetrics();
-					int displayWidth = cordova.getActivity().getWindowManager().getDefaultDisplay().getWidth();
-					int displayHeight = cordova.getActivity().getWindowManager().getDefaultDisplay().getHeight();
-					((Activity) cordova.getActivity()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
-					int width;
-					if(displayWidth < displayHeight){
-						width = (int) (displayWidth / metrics.density);
-					} else {
-						width = (int) (displayHeight / metrics.density);
+					if(bannerAd == null){//SHOWBANNER
+						preLoadBanner();
+						bannerAd.setAutoShow(true);
+					}else if(isLoadedBanner){//PRELOAD
+						bannerAd.show();
 					}
-					RevMobBanner.DEFAULT_WIDTH_IN_DIP = width;
-
-					int idealHeight = dipToPixels(cordova.getActivity(), RevMobBanner.DEFAULT_HEIGHT_IN_DIP);
-
-					width = dipToPixels(cordova.getActivity(), width);
-
-					bannerLayout = new RelativeLayout(cordova.getActivity());
-					bannerParams = new RelativeLayout.LayoutParams(width, idealHeight);
-					bannerParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-					bannerLayout.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-
-					bannerAd = revmob.createBanner(cordova.getActivity(), new RevMobAdsListener() {
-						public void onRevMobAdReceived() {
-							eventCallbackSuccess("BANNER_RECEIVED");
-						}
-						public void onRevMobAdNotReceived(String message) {
-							eventCallbackError("BANNER_NOT_RECEIVED - With error: "+message);
-						}
-						public void onRevMobAdClicked() {
-							eventCallbackSuccess("BANNER_CLICKED");
-						}
-						public void onRevMobAdDisplayed() {
-							eventCallbackSuccess("BANNER_DISPLAYED");
-						}
-					});
-
-					cordova.getActivity().addContentView(bannerLayout, new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT));
-
-					bannerLayout.addView(bannerAd, bannerParams);
 					bannerActivity = cordova.getActivity();
 
 				} catch (Exception e) {
 				}
 		}
 	});
-	}
-	private void hideBanner(final Activity activity) {
-		activity.runOnUiThread(new Runnable() {
-				public void run() {
-						try {
-								if (bannerLayout.getParent() != null)
-										((ViewGroup) bannerLayout.getParent()).removeView(bannerLayout);
-								bannerLayout.removeView(bannerAd);
-								bannerLayout.setVisibility(View.GONE);
-								bannerLayout = null;
-								bannerAd = null;
-								bannerActivity = null;
-						} catch (Exception e) {
 
-						}
-				}
-		});
 	}
+
 	private void hideBanner() {
 		cordova.getActivity().runOnUiThread(new Runnable() {
 				public void run() {
 						try {
+							if (bannerAd != null){
+								bannerAd.hide();
+							}
+						} catch (Exception e) {
+
+						}
+				}
+		});
+	}
+
+	private void releaseBanner() {
+		cordova.getActivity().runOnUiThread(new Runnable() {
+				public void run() {
+						try {
+							bannerAd.release();
 								if (bannerLayout.getParent() != null)
 										((ViewGroup) bannerLayout.getParent()).removeView(bannerLayout);
 								bannerLayout.removeView(bannerAd);
@@ -365,80 +419,115 @@ public class RevMobPlugin extends CordovaPlugin {
 				}
 		});
 	}
-	private void showCustomBannerPos(final JSONArray args) {
-		if (customBannerAd != null) {
-			hideCustomBanner(customBannerActivity);
-		}
-		customBannerAd = revmob.createBanner(cordova.getActivity(), new RevMobAdsListener() {
-			public void onRevMobAdReceived() {
-				eventCallbackSuccess("CUSTOM_BANNER_RECEIVED");
-			}
-			public void onRevMobAdNotReceived(String message) {
-				eventCallbackError("CUSTOM_BANNER_NOT_RECEIVED - With error: "+message);
-			}
-			public void onRevMobAdClicked() {
-				eventCallbackSuccess("CUSTOM_BANNER_CLICKED");
-			}
-			public void onRevMobAdDisplayed() {
-				eventCallbackSuccess("CUSTOM_BANNER_DISPLAYED");
+
+	private void releaseCustomBanner() {
+		cordova.getActivity().runOnUiThread(new Runnable() {
+			public void run() {
+				try {
+					customBannerAd.release();
+					if (customBannerLayout.getParent() != null)
+						((ViewGroup) customBannerLayout.getParent()).removeView(customBannerLayout);
+					customBannerLayout.removeView(customBannerAd);
+					customBannerLayout.setVisibility(View.GONE);
+					customBannerLayout = null;
+					customBannerAd = null;
+					customBannerActivity = null;
+				} catch (Exception e) {
+
+				}
 			}
 		});
+	}
+
+	private void preLoadCustomBanner(final JSONArray args) {
+		if (customBannerAd == null) {
+
 
 		cordova.getActivity().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-						customBannerLayout = new RelativeLayout(cordova.getActivity().getApplicationContext());
-						bannerParams = new RelativeLayout.LayoutParams(args.getInt(3), args.getInt(4));
-						if (args.getInt(1) != 0 || args.getInt(2) != 0 || args.getInt(3) !=
-						dipToPixels(cordova.getActivity(), RevMobBanner.DEFAULT_WIDTH_IN_DIP) || args.getInt(4) != dipToPixels(cordova.getActivity(), RevMobBanner.DEFAULT_HEIGHT_IN_DIP)) {
-								bannerParams.leftMargin = args.getInt(1);
-								bannerParams.topMargin = args.getInt(2);
-								bannerParams.width = args.getInt(3);
-								bannerParams.height = args.getInt(4);
-						} else {
-								bannerParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-								customBannerLayout.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-						}
-						cordova.getActivity().addContentView(customBannerLayout, new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT));
-						customBannerLayout.addView(customBannerAd, bannerParams);
-						customBannerActivity = cordova.getActivity();
+					customBannerLayout = new RelativeLayout(cordova.getActivity().getApplicationContext());
+					customBannerParams = new RelativeLayout.LayoutParams(args.getInt(3), args.getInt(4));
+					if (args.getInt(1) != 0 || args.getInt(2) != 0 || args.getInt(3) !=
+							dipToPixels(cordova.getActivity(), RevMobBanner.DEFAULT_WIDTH_IN_DIP) || args.getInt(4) != dipToPixels(cordova.getActivity(), RevMobBanner.DEFAULT_HEIGHT_IN_DIP)) {
+						customBannerParams.leftMargin = args.getInt(1);
+						customBannerParams.topMargin = args.getInt(2);
+						customBannerParams.width = args.getInt(3);
+						customBannerParams.height = args.getInt(4);
+					} else {
+						customBannerParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+						customBannerLayout.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+					}
+					cordova.getActivity().addContentView(customBannerLayout, new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT));
+
+
+					if (!isLoadingCustomBanner) {
+						isLoadingCustomBanner = true;
+						customBannerAd = revmob.createBanner(cordova.getActivity(), new RevMobAdsListener() {
+							public void onRevMobAdReceived() {
+								isLoadedCustomBanner = true;
+								isLoadingCustomBanner = false;
+								eventCallbackSuccess("CUSTOM_BANNER_RECEIVED");
+							}
+
+							public void onRevMobAdNotReceived(String message) {
+								eventCallbackError("CUSTOM_BANNER_NOT_RECEIVED - With error: " + message);
+								isLoadingCustomBanner=false;
+							}
+
+							public void onRevMobAdClicked() {
+								eventCallbackSuccess("CUSTOM_BANNER_CLICKED");
+							}
+
+							public void onRevMobAdDisplayed() {
+								eventCallbackSuccess("CUSTOM_BANNER_DISPLAYED");
+							}
+						});
+					}
+
+
+					customBannerLayout.addView(customBannerAd, customBannerParams);
+
+					customBannerAd.setAutoShow(false);
+
+
+					customBannerActivity = cordova.getActivity();
+				} catch (Exception e) {
+				}
+			}
+		});
+	}
+	}
+	private void showCustomBannerPos(final JSONArray args) {
+
+		cordova.getActivity().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					if(customBannerAd == null){//SHOWCUSTOMBANNER
+						preLoadCustomBanner(args);
+						customBannerAd.setAutoShow(true);
+					}else if(isLoadedCustomBanner){ //PRELOAD
+						customBannerAd.show();
+					}
 				} catch (Exception e) {
 				}
 			}
 		});
 	}
 
-	private void hideCustomBanner(final Activity activity) {
-		activity.runOnUiThread(new Runnable() {
-				public void run() {
-						try {
-								if (customBannerLayout.getParent() != null)
-										((ViewGroup) customBannerLayout.getParent()).removeView(customBannerLayout);
-								customBannerLayout.removeView(customBannerAd);
-								customBannerLayout.setVisibility(View.GONE);
-								customBannerLayout = null;
-								customBannerAd = null;
-								customBannerActivity = null;
-						} catch (Exception e) {
-						}
-				}
-		});
-	}
 	private void hideCustomBanner() {
 		cordova.getActivity().runOnUiThread(new Runnable() {
-				public void run() {
-						try {
-								if (customBannerLayout.getParent() != null)
-										((ViewGroup) customBannerLayout.getParent()).removeView(customBannerLayout);
-								customBannerLayout.removeView(customBannerAd);
-								customBannerLayout.setVisibility(View.GONE);
-								customBannerLayout = null;
-								customBannerAd = null;
-								customBannerActivity = null;
-						} catch (Exception e) {
-						}
+			public void run() {
+				try {
+					if (customBannerAd != null){
+						customBannerAd.hide();
+					}
+				} catch (Exception e) {
+
 				}
+			}
 		});
 	}
 
@@ -526,7 +615,7 @@ public class RevMobPlugin extends CordovaPlugin {
 	    lastCallbackContext.sendPluginResult(result);
 		}
 	}
-	public static int dipToPixels(Context context, int dip) {
+	public static int dipToPixels(Context context, float dip) {
 			final float scale = context.getResources().getDisplayMetrics().density;
 			return (int) (dip * scale + 0.5f);
 	}

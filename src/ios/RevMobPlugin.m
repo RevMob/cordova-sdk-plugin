@@ -10,6 +10,10 @@
 
 RevMobFullscreen *fullscreenAd, *video, *rewardedVideo;
 RevMobAdLink *adLink;
+bool isLoadingBanner = false;
+bool isLoadedBanner = false;
+bool isLoadingCustomBanner = false;
+bool isLoadedCustomBanner = false;
 
 - (void)startSession:(CDVInvokedUrlCommand*)command {
 
@@ -143,58 +147,14 @@ RevMobAdLink *adLink;
     if(self.rewardedVideo != nil) [self.rewardedVideo showRewardedVideo];
 }
 
-- (void)showBanner:(CDVInvokedUrlCommand*)command {
+- (void)preLoadBanner:(CDVInvokedUrlCommand*)command {
 
-    NSArray *arr = command.arguments;
-    NSArray *x = [arr objectAtIndex:0];
+    if(self.bannerWindow  == nil){
+        NSArray *arr = command.arguments;
+        NSArray *x = [arr objectAtIndex:0];
 
-  if(self.bannerWindow != nil){
-    [self.bannerWindow showAd];
-  }else{
-
-    self.bannerWindow = [[RevMobAds session] banner];
-    self.bannerWindow.delegate = self;
-    NSMutableArray *arrayOfOrientations = nil;
-    arrayOfOrientations = [[NSMutableArray alloc] initWithCapacity:4];
-    for (int i=0; i< [x count]; i++){
-
-        if( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortrait" ]){
-            [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortrait]];
-
-        }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortraitUpsideDown" ]){
-            [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortraitUpsideDown]];
-
-        }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeRight" ]){
-            [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight]];
-
-        }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeLeft" ]){
-            [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft]];
-
-        }
-    }
-
-    self.bannerWindow.supportedInterfaceOrientations = arrayOfOrientations;
-      [self.bannerWindow loadWithSuccessHandler:^(RevMobBanner *banner) {
-        [self eventCallbackSuccess:@"BANNER_RECEIVED" :command];
-          [banner showAd];
-        [self eventCallbackSuccess:@"BANNER_DISPLAYED" :command];
-      } andLoadFailHandler:^(RevMobBanner *banner, NSError *error) {
-          [self eventCallbackError:@"BANNER_NOT_RECEIVED" :command];
-      } onClickHandler:^(RevMobBanner *banner) {
-          [self eventCallbackSuccess:@"BANNER_CLICKED" :command];
-      }];
- }
-}
-
-- (void)showCustomBannerPos:(CDVInvokedUrlCommand*)command {
-  NSArray *arr = command.arguments;
-    NSArray *x = [arr objectAtIndex:0];
-
-    if(self.customBannerWindow != nil){
-      [self.customBannerWindow showAd];
-    }else{
-    self.customBannerWindow = [[RevMobAds session] banner];
-    self.customBannerWindow.delegate = self;
+        self.bannerWindow = [[RevMobAds session] banner];
+        self.bannerWindow.delegate = self;
         NSMutableArray *arrayOfOrientations = nil;
         arrayOfOrientations = [[NSMutableArray alloc] initWithCapacity:4];
         for (int i=0; i< [x count]; i++){
@@ -202,7 +162,7 @@ RevMobAdLink *adLink;
             if( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortrait" ]){
                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortrait]];
 
-            }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortraitUpsideDown" ]){
+          }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortraitUpsideDown" ]){
                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortraitUpsideDown]];
 
             }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeRight" ]){
@@ -213,38 +173,200 @@ RevMobAdLink *adLink;
 
             }
         }
+        self.bannerWindow.supportedInterfaceOrientations = arrayOfOrientations;
 
-    self.customBannerWindow.supportedInterfaceOrientations = arrayOfOrientations;
-    CGFloat x = [[arr objectAtIndex:1] floatValue];
-    CGFloat y = [[arr objectAtIndex:2] floatValue];
-    CGFloat w = [[arr objectAtIndex:3] floatValue];
-    CGFloat h = [[arr objectAtIndex:4] floatValue];
-    [self.customBannerWindow setFrame:CGRectMake(x, y, w, h)];
-        [self.customBannerWindow loadWithSuccessHandler:^(RevMobBanner *banner) {
-          [self eventCallbackSuccess:@"CUSTOM_BANNER_RECEIVED" :command];
-          [banner showAd];
-          [self eventCallbackSuccess:@"CUSTOM_BANNER_DISPLAYED" :command];
-        } andLoadFailHandler:^(RevMobBanner *banner, NSError *error) {
-            [self eventCallbackError:@"CUSTOM_BANNER_NOT_RECEIVED" :command];
-        } onClickHandler:^(RevMobBanner *banner) {
-            [self eventCallbackSuccess:@"CUSTOM_BANNER_CLICKED" :command];
-        }];
+        if(!isLoadingBanner){
+            isLoadingBanner=true;
+            [self.bannerWindow loadWithSuccessHandler:^(RevMobBanner *banner) {
+                [self eventCallbackSuccess:@"BANNER_RECEIVED" :command];
+                isLoadingBanner=false;
+                isLoadedBanner=true;
+                [self eventCallbackSuccess:@"BANNER_DISPLAYED" :command];
+            } andLoadFailHandler:^(RevMobBanner *banner, NSError *error) {
+                isLoadingBanner=false;
+                self.bannerWindow = nil;
+                [self eventCallbackError:@"BANNER_NOT_RECEIVED" :command];
+            } onClickHandler:^(RevMobBanner *banner) {
+                [self eventCallbackSuccess:@"BANNER_CLICKED" :command];
+            }];
+        }
     }
 }
+- (void)showBanner:(CDVInvokedUrlCommand*)command {
+
+     if(self.bannerWindow == nil){
+         NSArray *arr = command.arguments;
+         NSArray *x = [arr objectAtIndex:0];
+
+         self.bannerWindow = [[RevMobAds session] banner];
+         self.bannerWindow.delegate = self;
+         NSMutableArray *arrayOfOrientations = nil;
+         arrayOfOrientations = [[NSMutableArray alloc] initWithCapacity:4];
+         for (int i=0; i< [x count]; i++){
+
+             if( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortrait" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortrait]];
+
+           }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortraitUpsideDown" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortraitUpsideDown]];
+
+             }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeRight" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight]];
+
+             }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeLeft" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft]];
+
+             }
+         }
+         self.bannerWindow.supportedInterfaceOrientations = arrayOfOrientations;
+
+     }
+    if(isLoadedBanner){
+        [self.bannerWindow showAd];
+    }else{
+           [self.bannerWindow loadWithSuccessHandler:^(RevMobBanner *banner) {
+               [self eventCallbackSuccess:@"BANNER_RECEIVED" :command];
+               [banner showAd];
+               [self eventCallbackSuccess:@"BANNER_DISPLAYED" :command];
+           } andLoadFailHandler:^(RevMobBanner *banner, NSError *error) {
+               self.bannerWindow = nil;
+               [self eventCallbackError:@"BANNER_NOT_RECEIVED" :command];
+           } onClickHandler:^(RevMobBanner *banner) {
+               [self eventCallbackSuccess:@"BANNER_CLICKED" :command];
+          }];
+       }
+ }
+
+ - (void)preLoadCustomBanner:(CDVInvokedUrlCommand*)command {
+     if(self.customBannerWindow == nil){
+      NSArray *arr = command.arguments;
+      NSArray *x = [arr objectAtIndex:0];
+
+      self.customBannerWindow = [[RevMobAds session] banner];
+      self.customBannerWindow.delegate = self;
+      NSMutableArray *arrayOfOrientations = nil;
+      arrayOfOrientations = [[NSMutableArray alloc] initWithCapacity:4];
+      for (int i=0; i< [x count]; i++){
+
+          if( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortrait" ]){
+              [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortrait]];
+
+          }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortraitUpsideDown" ]){
+              [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortraitUpsideDown]];
+
+         }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeRight" ]){
+              [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight]];
+
+          }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeLeft" ]){
+              [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft]];
+
+          }
+      }
+
+      self.customBannerWindow.supportedInterfaceOrientations = arrayOfOrientations;
+      CGFloat c = [[arr objectAtIndex:1] floatValue];
+      CGFloat y = [[arr objectAtIndex:2] floatValue];
+      CGFloat w = [[arr objectAtIndex:3] floatValue];
+      CGFloat h = [[arr objectAtIndex:4] floatValue];
+      [self.customBannerWindow setFrame:CGRectMake(c, y, w, h)];
+
+      if(!isLoadingCustomBanner){
+          isLoadingCustomBanner=true;
+
+          [self.customBannerWindow loadWithSuccessHandler:^(RevMobBanner *banner) {
+              [self eventCallbackSuccess:@"BANNER_RECEIVED" :command];
+              isLoadingCustomBanner=false;
+              isLoadedCustomBanner=true;
+              [self eventCallbackSuccess:@"BANNER_DISPLAYED" :command];
+          } andLoadFailHandler:^(RevMobBanner *banner, NSError *error) {
+            isLoadingCustomBanner=false;
+              self.customBannerWindow = nil;
+              [self eventCallbackError:@"BANNER_NOT_RECEIVED" :command];
+          } onClickHandler:^(RevMobBanner *banner) {
+              [self eventCallbackSuccess:@"BANNER_CLICKED" :command];
+          }];
+
+      }
+     }
+  }
+
+ - (void)showCustomBannerPos:(CDVInvokedUrlCommand*)command {
+   if(self.customBannerWindow == nil){
+     NSArray *arr = command.arguments;
+     NSArray *x = [arr objectAtIndex:0];
+
+     self.customBannerWindow = [[RevMobAds session] banner];
+     self.customBannerWindow.delegate = self;
+         NSMutableArray *arrayOfOrientations = nil;
+         arrayOfOrientations = [[NSMutableArray alloc] initWithCapacity:4];
+         for (int i=0; i< [x count]; i++){
+
+             if( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortrait" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortrait]];
+
+             }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationPortraitUpsideDown" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortraitUpsideDown]];
+
+             }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeRight" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight]];
+
+             }else if ( [ [x objectAtIndex:i] isEqualToString:@"UIInterfaceOrientationLandscapeLeft" ]){
+                 [arrayOfOrientations addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft]];
+
+             }
+         }
+
+     self.customBannerWindow.supportedInterfaceOrientations = arrayOfOrientations;
+     CGFloat c = [[arr objectAtIndex:1] floatValue];
+     CGFloat y = [[arr objectAtIndex:2] floatValue];
+     CGFloat w = [[arr objectAtIndex:3] floatValue];
+     CGFloat h = [[arr objectAtIndex:4] floatValue];
+     [self.customBannerWindow setFrame:CGRectMake(c, y, w, h)];
+
+   }
+     if (isLoadedCustomBanner){
+         [self.customBannerWindow showAd];
+     }else {
+         [self.customBannerWindow loadWithSuccessHandler:^(RevMobBanner *banner) {
+             [self eventCallbackSuccess:@"CUSTOM_BANNER_RECEIVED" :command];
+             [banner showAd];
+             [self eventCallbackSuccess:@"CUSTOM_BANNER_DISPLAYED" :command];
+         } andLoadFailHandler:^(RevMobBanner *banner, NSError *error) {
+             self.customBannerWindow = nil;
+             [self eventCallbackError:@"CUSTOM_BANNER_NOT_RECEIVED" :command];
+         } onClickHandler:^(RevMobBanner *banner) {
+             [self eventCallbackSuccess:@"CUSTOM_BANNER_CLICKED" :command];
+         }];
+     }
+ }
 
 - (void)hideBanner:(CDVInvokedUrlCommand*)command {
   if(self.bannerWindow != nil){
    [self.bannerWindow hideAd];
-   self.bannerWindow = nil;
  }
 }
 
 - (void)hideCustomBanner:(CDVInvokedUrlCommand*)command {
   if(self.customBannerWindow != nil){
     [self.customBannerWindow hideAd];
-    self.customBannerWindow = nil;
   }
 }
+
+- (void)releaseBanner:(CDVInvokedUrlCommand*)command {
+     if(self.bannerWindow != nil){
+       isLoadedBanner=false;
+         [self.bannerWindow releaseAd];
+         self.bannerWindow = nil;
+     }
+}
+
+- (void)releaseCustomBanner:(CDVInvokedUrlCommand*)command {
+     if(self.customBannerWindow != nil){
+       isLoadedCustomBanner=false;
+         [self.customBannerWindow releaseAd];
+         self.customBannerWindow = nil;
+      }
+  }
 
 - (void)openLink:(CDVInvokedUrlCommand *)command {
     RevMobAdLink *link = [[RevMobAds session] adLink];

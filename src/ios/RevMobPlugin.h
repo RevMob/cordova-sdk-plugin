@@ -50,6 +50,14 @@
 
 - (void) setUserAgeRangeMin:(CDVInvokedUrlCommand*)command;
 
+- (void) releaseBanner:(CDVInvokedUrlCommand*)command;
+
+- (void) releaseCustomBanner:(CDVInvokedUrlCommand*)command;
+
+- (void) preLoadBanner:(CDVInvokedUrlCommand*)command;
+
+- (void) preLoadCustomBanner:(CDVInvokedUrlCommand*)command;
+
 @property (nonatomic, strong)CDVInvokedUrlCommand *sessionCommand;
 
 @end

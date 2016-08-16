@@ -76,6 +76,22 @@ function RevMob(appId) {
 		cordova.exec(successCallback, errorCallback, "RevMobPlugin", "setUserAgeRangeMin", [age]);
 	}
 
+	this.preLoadBanner = function(lockedOrientation, successCallback, errorCallback) {
+ 		cordova.exec(successCallback, errorCallback, "RevMobPlugin", "preLoadBanner", [lockedOrientation]);
+ 	}
+
+	this.preLoadCustomBanner = function(lockedOrientation, x, y, w, h, successCallback, errorCallback) {
+ 		cordova.exec(successCallback, errorCallback, "RevMobPlugin", "preLoadCustomBanner", [lockedOrientation,x,y,w,h]);
+ 	}
+
+ 	this.releaseBanner = function(successCallback, errorCallback) {
+ 		cordova.exec(successCallback, errorCallback, "RevMobPlugin", "releaseBanner", []);
+ 	}
+
+	this.releaseCustomBanner = function(successCallback, errorCallback) {
+		cordova.exec(successCallback, errorCallback, "RevMobPlugin", "releaseCustomBanner", []);
+	}
+
 }
 
 module.exports = RevMob

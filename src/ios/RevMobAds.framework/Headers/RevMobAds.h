@@ -42,14 +42,14 @@ typedef enum {
 
 /**
  This property is used to put the SDK in testing mode, there are 3 possible states.
- 
+
  - RevMobAdsTestingModeOff - Turn off the testing mode;
- 
+
  - RevMobAdsTestingModeWithAds - Testing mode that always shows ads;
- 
+
  - RevMobAdsTestingModeWithoutAds- Testing mode that never shows ads.
 
- 
+
  **Important note**: You **can't** submmit your app to Apple with testing mode turned on, this will show test ads that don't monetize.
 
  */
@@ -57,11 +57,11 @@ typedef enum {
 
 /**
  This property is used to set the parallaxe effect on ad units.
- 
+
  - RevMobParallaxModeOff - Turn off the parallax effect
- 
+
  - RevMobParallaxModeDefault - Use the default parallax effect
- 
+
  - RevMobParallaxModeWithBackground - Use the parallax with black background effect
 
  Default value is RevMobParallaxModeOff.
@@ -73,7 +73,7 @@ typedef enum {
  There are two options: RevMobUserGenderFemale and RevMobUserGenderMale.
 
  Example of usage:
- 
+
      [RevMobAds session].userGender = RevMobUserGenderFemale;
 
  */
@@ -82,10 +82,10 @@ typedef enum {
 /**
  This property is used to determine if the user is 13 or less years old, in which case no identifier will be collected,
  in compliance with the Children's Online Privacy Protection Act.
- 
+
  If the user is older than 13, this information will be used to get targeted ads leading to higher eCPM.
  You should set also set userAgeRangeMax or alternatively set userBirthday.
- 
+
  Example of usage:
 
      [RevMobAds session].userAgeRangeMin = 18;
@@ -96,7 +96,7 @@ typedef enum {
 /**
  This property is used to determine if the user is 13 or less years old, in which case no identifier will be collected,
  in compliance with the Children's Online Privacy Protection Act.
- 
+
  If the user is older than 13, this information will be used to get targeted ads leading to higher eCPM.
  You should set also set userAgeRangeMin or alternatively set userBirthday.
 
@@ -145,44 +145,44 @@ typedef enum {
 
 /**
  This method is necessary to get the ads objects.
- 
+
  It must be the first method called on the application:didFinishLaunchingWithOptions: method of the application delegate.
- 
+
  Example of Usage:
- 
+
      - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
- 
+
          [RevMobAds startSessionWithAppID:@"your RevMob App ID"];
- 
+
          self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
- 
+
          // Override point for customization after application launch.
      }
- 
+
  @param appID: You can collect your App ID at http://revmob.com by looking up your apps.
  */
 + (RevMobAds *)startSessionWithAppID:(NSString *)anAppId;
 
 /**
  This method is necessary to get the ads objects with delegate.
- 
+
  It must be the first method called on the application:didFinishLaunchingWithOptions: method of the application delegate.
- 
+
  Example of Usage:
- 
+
  - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
- 
+
  [RevMobAds startSessionWithAppID:@"your RevMob App ID" andDelegate:self];
- 
+
  self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
- 
+
  // Override point for customization after application launch.
  }
 
  @param appID: You can collect your App ID at http://revmob.com by looking up your apps.
  @param adelegate:  The delegate is called when ad related events happen, see
  RevMobAdsDelegate for mode details. Can be nil;
- 
+
  */
 + (RevMobAds *)startSessionWithAppID:(NSString *)anAppId andDelegate:(id<RevMobAdsDelegate>)adelegate;
 
@@ -190,11 +190,11 @@ typedef enum {
  This method is necessary to get the ads objects with delegate.
 
  It must be the first method called on the application:didFinishLaunchingWithOptions: method of the application delegate.
- 
+
  Example of Usage:
- 
+
  - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
- 
+
     [RevMobAds startSessionWithAppID:@"your RevMob App ID"
                 withSuccessHandler:^{
                     NSLog(@"Session started with block");
@@ -202,16 +202,16 @@ typedef enum {
                     NSLog(@"Session failed to start with block");
     }];
 
- 
+
  self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
- 
+
  // Override point for customization after application launch.
  }
- 
+
  @param appID: You can collect your App ID at http://revmob.com by looking up your apps.
  @param onSessionStartedHandler: A block that will be executed once the session is started, can be nil.
  @param onSessionNotStartedHandler: A block that will be executed once the session failed to start, can be nil.
- 
+
  */
 + (RevMobAds *)startSessionWithAppID:(NSString *)anAppId
                   withSuccessHandler:(void(^)())onSessionStartedHandler
@@ -223,10 +223,14 @@ typedef enum {
                                  url:(NSString *) serverUrl
                                  key:(int) sessionKey;
 
++ (RevMobAds *)startSessionWithAppID:(NSString *)anAppId
+                         withSdkName:(NSString *)sdkName
+                  withSuccessHandler:(void(^)()) onSessionStartedHandler
+                      andFailHandler:(void(^)(NSError *error)) onSessionNotStartedHandler;
 
 /**
  This method can be used to get the already initialized session of RevMobAds.
- 
+
  @return If is called before the session initialization, this method will return nil.
  */
 + (RevMobAds *)session;
@@ -268,6 +272,16 @@ typedef enum {
 
 -(void) updateBannerForViewController:(UIViewController *) vc;
 -(void) updateBanner;
+/**
+ Release the banner that is displayed.
+
+ Example of usage:
+ [[RevMobAds session] releaseBanner];
+
+ @see releaseBanner
+ */
+
+-(void)releaseBanner;
 
 /**
  Show popup.
@@ -341,7 +355,7 @@ typedef enum {
  This is the factory of RevMobBannerView ad object
 
  Example of Usage:
- 
+
       RevMobBannerView *ad = [[RevMobAds session] bannerView]; // you must retain this object
       [ad loadWithSuccessHandler:^(RevMobBannerView *banner) {
         if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
@@ -356,8 +370,8 @@ typedef enum {
       } onClickHandler:^(RevMobBannerView *banner) {
         NSLog(@"Ad clicked");
       }];
- 
-  @return RevMobBannerView object. 
+
+  @return RevMobBannerView object.
 */
 - (RevMobBannerView *)bannerView;
 
@@ -392,7 +406,7 @@ typedef enum {
  This is the factory of RevMobBanner ad object
 
  Example of Usage:
- 
+
       RevMobBanner *ad = [[RevMobAds session] banner]; // you must retain this object
       [ad loadWithSuccessHandler:^(RevMobBanner *banner) {
         [banner showAd];
@@ -490,7 +504,7 @@ typedef enum {
      } onClickHandler:^(RevMobButton *button) {
        NSLog(@"Button clicked!");
      }];
- 
+
  @return RevMobButton object.
  */
 - (RevMobButton *)buttonUnloaded;
@@ -522,7 +536,7 @@ typedef enum {
  This is the factory of adLink object
 
  Example of Usage:
- 
+
      RevMobAdLink *ad = [[RevMobAds session] adLink]; // you must retain this object
      [link loadWithSuccessHandler:^(RevMobAdLink *link) {
        [link openLink];
@@ -558,7 +572,7 @@ typedef enum {
  This is the factory of popup ad object
 
  Example of Usage:
- 
+
       RevMobPopup *ad = [[RevMobAds session] popup]; // you must retain this object
       [ad loadWithSuccessHandler:^(RevMobPopup *popup) {
         [popup showAd];

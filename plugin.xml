@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="com.revmob.cordova.plugin" version="9.1.6">
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="com.revmob.cordova.plugin" version="9.2.0">
 
     <name>RevMob Cordova Plugin</name>
     <description>Official RevMob Cordova Plugin for iOS and Android</description>
